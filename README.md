@@ -23,13 +23,24 @@ Fill in the below template for your entry
 -------------------------------------------------------------------------------
 
 
-# [Your app name here]
+# Progressive Web Chat
 
 ## App description
-
+Progressive Web Chat is a progressive web application that simulates a chat room. Users are able to join a chat room and send/receive messages. The scope of this project is to illustrate how to build a progressive web application that also works offline.
 
 ## Technologies used
 
+### Service Workers
+Service Workers were used to cache the static assets such as JavaScript and CSS. They are also a pre-requisite for push notifications.
+
+### PushAPI
+Push notifications were implemented using the PushAPI and Google Cloud Messaging.
+
+### KnockoutJS
+KnockoutJS was used to implement a pub/sub messaging (through postbox) and to implement the view model bindings.
+
+### Third-party dependencies
+The application is dependent on third party hosted APIs which are used to manage the server-side implementation for the push notifications and hsot the SignalR web socket hubs.
 
 ## Link to live demo
-Contest entries need to be hosted online and be accessible at least through the judging period (May 31 – June 5).
+[Demo](https://www.incredible-web.com/demo/progressivewebchat/)
