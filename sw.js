@@ -11,6 +11,8 @@ self.addEventListener('install', function(e) {
                 './js/build/script.min.js',
                 './js/build/vendor.min.js',
                 './js/vendor/jquery.min.js',
+                './main.html',
+                './chat.html',
                 'https://fonts.googleapis.com/css?family=Roboto:300,600,300italic,600italic'
             ]).then(function() {
                 self.skipWaiting();
@@ -38,7 +40,7 @@ self.addEventListener('fetch', function(event) {
 self.addEventListener('push', function(event) {
     console.log('Received a push message');
 
-    var title = 'New message.'; 
+    var title = 'New message.';
     var body = 'You have received a new message.';
     var icon = './launcher-icon-8x.png';
     var tag = 'simple-push-demo-notification-tag';

@@ -28,7 +28,7 @@ function initialisePush() {
                     return;
                 }
 
-                // chrome
+                // retrieve the registrationId from GCM (n.b. this is not sending a push)
                 if (subscription.endpoint.indexOf('https://android.googleapis.com/gcm/send') === 0) {
                     var endpointParts = subscription.endpoint.split('/');
                     var registrationId = endpointParts[endpointParts.length - 1];
@@ -37,7 +37,7 @@ function initialisePush() {
                         $.ajax({
                             url: "http://progressivewebchat-signalr.localhost/notificationhub/add",
                             type: "GET",
-                            data: { value: registrationId }
+                            data: { value: registrationId, channel: $.channel }
                         });
                     }
                 } else {
@@ -110,24 +110,19 @@ function initialisePush() {
             navigator.serviceWorker.ready.then(function(serviceWorkerRegistration) {
                 // retrieve the push manager subscription
                 serviceWorkerRegistration.pushManager.getSubscription().then(function(subscription) {
+                    // retrieve the sender's registration id
+                    var registrationId = "";
+                    if (subscription.endpoint.indexOf('https://android.googleapis.com/gcm/send') === 0) {
+                        var endpointParts = subscription.endpoint.split('/');
+                        registrationId = endpointParts[endpointParts.length - 1];
+                    }
                     // retrieve the registrationIds
                     $.ajax({
-                        url: "http://progressivewebchat-signalr.localhost/notificationhub",
+                        url: "http://progressivewebchat-signalr.localhost/notificationhub/send",
                         type: "GET",
+                        data: { channel: $.channel, senderId: registrationId }
                     }).then(function(response) {
-                        var data = JSON.parse(response);
-                        for (var i = data.length - 1; i >= 0; i--) {
-                            // send the push notification to GCM
-                            $.ajax({
-                                type: "POST",
-                                url: "https://android.googleapis.com/gcm/send",
-                                contentType: 'application/json',
-                                beforeSend: function(request) {
-                                    request.setRequestHeader("Authorization", "key=AIzaSyAF5MPpOxHAeaFJDgzoFg6TdjNiQuiaNoY");
-                                },
-                                data: "{\"registration_ids\":[\"" + data[i] + "\"]}"
-                            });
-                        }
+                        console.log("Sent PUSH notifications through server");
                     });
                 });
             });
