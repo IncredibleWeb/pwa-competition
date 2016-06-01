@@ -44,7 +44,7 @@
             var $element = context.$element();
 
             // retrieve the list of channels from the API and render the HTML
-            context.render('/main.html').then(function(response) {
+            context.render('./main.html').then(function(response) {
                 context.app.swap(response);
             });
         });

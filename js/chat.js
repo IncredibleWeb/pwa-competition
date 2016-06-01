@@ -142,7 +142,7 @@
             var $element = context.$element();
 
             // show the empty templates
-            context.render('/chat.html').then(function(response) {
+            context.render('./chat.html').then(function(response) {
                 context.app.swap(response);
 
                 var channel = self.params.channel;
