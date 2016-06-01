@@ -1,0 +1,13 @@
+<div class="container">
+    <div id="chat" class="chat content">
+        <ul class="message-list" data-bind="foreach: messages">
+            <li class="message" data-bind="css: sender ">
+                <p data-bind="html: message"></p>
+            </li>
+        </ul>
+    </div>
+    <form class="text-input content" autocomplete="off">
+        <input type="text" id="message" placeholder="Type a message..." autocomplete="off" />
+        <input type="submit" class="sendMessage" value="&raquo;" disabled="disabled" />
+    </form>
+</div>

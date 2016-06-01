@@ -26,7 +26,7 @@
         var self = this;
 
         // retrieve all messages from the DB
-        self.get = function() {
+        self.get = function(data) {
             // create a deferred object
             var deferred = $.Deferred();
             // create a transaction for the indexedDB
@@ -44,9 +44,17 @@
             };
 
             response.onsuccess = function(event) {
-                console.log(response.result);
                 if (response.result && response.result.length) {
-                    deferred.resolve(response.result);
+                    var result = response.result;
+                    // filter by channel
+                    if ($.channel) {
+                        result = _.filter(response.result, function(n) {
+                            return n.channel === $.channel;
+                        });
+                    }
+
+                    deferred.resolve(result);
+
                 }
                 deferred.resolve();
             };
@@ -128,75 +136,102 @@
         // initialize the controller
         var messageController = new MessageController(messageService, messageAdapter);
 
-        // hub is remote
-        $.connection.hub.url = "//progressivewebchat-signalr.localhost/signalr";
+        // register the channel routes
+        $.app.get('/:channel/?', function(context) {
+            var self = this;
+            var $element = context.$element();
 
-        // if connected to the signalR hub
-        if ($.connection.chatHub) {
-            // create a function that the hub can call to broadcast messages
-            $.connection.chatHub.client.broadcastMessage = function(name, message) {
-                // add the received message to the view model
-                $.vm.messages.push(messageAdapter.toMessage({
-                    name: name,
-                    message: message
-                }));
-                // update the database
-                messageController.add({
-                    name: name,
-                    message: message
-                });
-                // scroll down
-                $("html, body").animate({ scrollTop: $(document).height() }, "fast");
-            };
+            // show the empty templates
+            context.render('/chat.html').then(function(response) {
+                context.app.swap(response);
 
-            // create a deferred object
-            var deferred = $.Deferred();
+                var channel = self.params.channel;
 
-            // initialize the connection with the hub
-            $.connection.hub.start().done(function() {
-                // notify that the hub connection has started
-                deferred.resolve();
-            });
-        }
+                // register the user on the channel
+                $.channel = channel;
 
+                // initialise the chat controls and hubs
+                initialiseChat();
+                ko.applyBindings($.vm, $("#chat")[0]);
 
-        $(function() {
-            request.onsuccess = function() {
-                // retrieve all the messages from the DB
-                messageController.get().then(function(response) {
+                // retrieve the messages
+                messageController.get({ channel: channel }).then(function(response) {
                     $.vm.messages(response);
                     // scroll down
                     $("html, body").scrollTop($(document).height());
                 });
-            };
 
-            // enable the button only if successfully connected to the hub
-            deferred.then(function() {
-                var $button = $(".sendMessage");
-                var $message = $("#message");
-                // enable the button
-                $button.prop('disabled', false);
-                // send the message
-                $button.on("click", function(event) {
-                    event.preventDefault();
-                    if ($message.val().length > 0) {
-                        // send the message to the server
-                        $.connection.chatHub.server.send($.uid, $message.val());
-                        // send push notification
-                        $.postbox.notifySubscribers($message.val(), "pushNotification");
-                        // clear the field
-                        $message.val("");
-                    }
-                });
-
-                // user presses enter
-                $message.on("keydown", function(event) {
-                    if (event.keyCode === 13) {
-                        event.preventDefault();
-                        $button.click();
-                    }
-                });
+                // initialise pushAPI
+                initialisePush();
             });
         });
+
+        $.deferreds.chatRoutes.resolve();
+
+        function initialiseChat() {
+
+            // hub is remote
+            $.connection.hub.url = "//progressivewebchat-signalr.localhost/signalr";
+
+            // if connected to the signalR hub
+            if ($.connection.chatHub) {
+                // create a function that the hub can call to broadcast messages
+                $.connection.chatHub.client.broadcastMessage = function(name, message) {
+                    // add the received message to the view model
+                    $.vm.messages.push(messageAdapter.toMessage({
+                        name: name,
+                        message: message
+                    }));
+                    // update the database
+                    messageController.add({
+                        name: name,
+                        message: message,
+                        channel: $.channel
+                    });
+                    // scroll down
+                    $("html, body").animate({ scrollTop: $(document).height() }, "fast");
+                };
+
+                // create a deferred object
+                var deferred = $.Deferred();
+
+                // initialize the connection with the hub
+                $.connection.hub.start().done(function() {
+                    // notify that the hub connection has started
+                    deferred.resolve();
+                });
+            }
+
+
+            $(function() {
+                // enable the button only if successfully connected to the hub
+                deferred.then(function() {
+                    var $button = $(".sendMessage");
+                    var $message = $("#message");
+                    // enable the button
+                    $button.prop('disabled', false);
+                    // send the message
+                    $button.on("click", function(event) {
+                        event.preventDefault();
+                        if ($message.val().length > 0) {
+                            // send the message to the server
+                            $.connection.chatHub.server.send($.uid, $message.val());
+                            // send push notification
+                            $.postbox.notifySubscribers($message.val(), "pushNotification");
+                            // clear the field
+                            $message.val("");
+                        }
+                    });
+
+                    // user presses enter
+                    $message.on("keydown", function(event) {
+                        if (event.keyCode === 13) {
+                            event.preventDefault();
+                            $button.click();
+                        }
+                    });
+                });
+            });
+        }
     })(jQuery);
 })();
